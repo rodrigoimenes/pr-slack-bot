@@ -28,6 +28,8 @@
 
 ### Emojis
 
+You can find these emojis in `src/emojis`
+
 - `:pr-small:` - PR of small size (<=80 changes);
 - `:pr-medium:` - PR of small size (<=250 changes);
 - `:pr-large:` - PR of small size (<=800 changes);
@@ -43,9 +45,22 @@
 - `:closedpr:` - PR was closed;
 - `:shrug:` - Some unknown action was taken. Please report it :robot_face:.
 
+### Another emojis
+
+- `:worry-big:`
+- `:awthanks:`
+- `:scream:`
+- `:notsure:`
+- `:doit:`
+- `:robot_face:`
+- `:kuchiyose:`
+- `:kuchiyose_smoke:`
+- `:sob:`
+
 The code for each emoji interaction can be changed in the `src/consts.js` file.
 
 ## Developing
 
+- `npm install`
 - `npm run dev` - Listen only to messages from the test channels defined on `consts.js`
 - `npm run start` - Start the bot on production mode
