@@ -8,7 +8,6 @@ const DB = require('./api/db.js');
 const Message = require('./includes/message.js');
 const Lock = require('./includes/lock.js');
 const debounce = require('./includes/debounce.js');
-const check_defcon = require('./includes/check_defcon.js');
 
 const { EMOJIS, PR_SIZES, GITHUB_APP_URL } = require('./consts.js');
 
@@ -517,22 +516,6 @@ exports.create = ({
     );
   }
 
-  async function can_be_merged() {
-    const { base_branch } = state;
-    if (base_branch !== 'master' && base_branch.match(/\d\.x/i) == null) {
-      return { can_merge: true };
-    }
-
-    const defcon_status = await check_defcon();
-    if (defcon_status == null) return { can_merge: true };
-
-    return {
-      can_merge:
-        defcon_status.level !== 'critical' && defcon_status.level !== 'warning',
-      defcon: defcon_status,
-    };
-  }
-
   function has_pending_review() {
     return state.actions.some(item => item.action === ACTIONS.pending_review);
   }
@@ -676,23 +659,14 @@ exports.create = ({
       await delete_reply('ready_to_merge');
     } else {
       let text;
-      const { can_merge, defcon } = await can_be_merged();
-      if (can_merge === false) {
-        text = `This PR would be ready to be merged, but we're at *DEFCON ${defcon.id}* :harold-pain:. ${defcon.message}.`;
+      const n_approvals = get_approvals();
+      const is_release_branch = !!base_branch.match(
+        /^(?:master|release[/-]?|(?:\d\.)+x)/i,
+      );
+      if (n_approvals === 0 && is_release_branch) {
+        text = `PR is ready to be merged, but I can't seem to find any reviews approving it :notsure:.\n\nIs there a merge protection rule configured for the \`${base_branch}\` branch?`;
       } else {
-        const n_approvals = get_approvals();
-        const is_release_branch = !!base_branch.match(
-          /^(?:master|release[/-]?|(?:\d\.)+x)/i,
-        );
-        if (n_approvals === 0 && is_release_branch) {
-          text = `PR is ready to be merged, but I can't seem to find any reviews approving it :notsure-left:.\n\nIs there a merge protection rule configured for the \`${base_branch}\` branch?`;
-        } else {
-          text = 'PR is ready to be merged :doit:!';
-        }
-
-        if (defcon && defcon.level === 'info') {
-          text += `\n\nRemember that we're at *DEFCON ${defcon.id}* :apruved:. ${defcon.message}.`;
-        }
+        text = 'PR is ready to be merged :doit:!';
       }
 
       await reply('ready_to_merge', text);
